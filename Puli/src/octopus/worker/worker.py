@@ -405,26 +405,29 @@ class Worker(MainLoopApplication):
         #     LOGGER.error("A problem occured : " + repr(sys.exc_info()))
 
     def sendSysInfosMessage(self):
-        # we don't need to send the whole dict of sysinfos
-        #infos = self.fetchSysInfos()
-        infos = {}
-        infos['status'] = self.status
-        dct = json.dumps(infos)
-        headers = {}
-        headers['content-length'] = len(dct)
+        # only send sysinfos message if the worker is not paused
+        LOGGER.info("status is %d" % self.status)
+        if self.status is not rendernode.RN_PAUSED:
+            # we don't need to send the whole dict of sysinfos
+            #infos = self.fetchSysInfos()
+            infos = {}
+            infos['status'] = self.status
+            dct = json.dumps(infos)
+            headers = {}
+            headers['content-length'] = len(dct)
 
-        try:
-            self.requestManager.put("/rendernodes/%s/sysinfos" % self.computerName, dct, headers)
-        except RequestManager.RequestError, err:
-            if err.status == 404:
-                # the dispatcher doesn't know the worker
-                # it may have been launched before the dispatcher itself
-                # and not be mentioned in the tree.description file
-                self.registerWorker()
-            else:
-                raise
-        except httplib.BadStatusLine:
-            LOGGER.exception('Sending sys infos has failed with a BadStatusLine error')
+            try:
+                self.requestManager.put("/rendernodes/%s/sysinfos" % self.computerName, dct, headers)
+            except RequestManager.RequestError, err:
+                if err.status == 404:
+                    # the dispatcher doesn't know the worker
+                    # it may have been launched before the dispatcher itself
+                    # and not be mentioned in the tree.description file
+                    self.registerWorker()
+                else:
+                    raise
+            except httplib.BadStatusLine:
+                LOGGER.exception('Sending sys infos has failed with a BadStatusLine error')
 
     def connect(self):
         return httplib.HTTPConnection(settings.DISPATCHER_ADDRESS, settings.DISPATCHER_PORT)

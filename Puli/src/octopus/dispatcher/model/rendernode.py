@@ -199,10 +199,9 @@ class RenderNode(models.Model):
     #  status is not changed if no info is brought by the commands
     #
     def updateStatus(self):
-        # self.status is not RN_PAUSED and
-        if time.time() > (self.lastAliveTime + TIMEOUT):
+        if self.status is not RN_PAUSED and time.time() > (self.lastAliveTime + TIMEOUT):
             # timeout the commands running on this node
-            if RN_UNKNOWN != self.status:
+            if self.status not in (RN_UNKNOWN, RN_BOOTING):
                 LOGGER.warning("rendernode %s is not responding", self.name)
                 self.status = RN_UNKNOWN
                 if self.commands:
@@ -212,11 +211,7 @@ class RenderNode(models.Model):
             return
         # This is necessary in case of a cancel command or a mylawn -k
         if not self.commands:
-            # if self.status is RN_WORKING:
-            #     # cancel the command that is running on this RN because it's no longer registered in the model
-            #     LOGGER.warning("rendernode %s is reported as working but has no registered command" % self.name)
             if self.status not in (RN_IDLE, RN_PAUSED, RN_BOOTING):
-                #LOGGER.warning("rendernode %s was %d and is now IDLE." % (self.name, self.status))
                 self.status = RN_IDLE
                 if self.currentpoolshare:
                     self.currentpoolshare.allocatedRN -= 1
