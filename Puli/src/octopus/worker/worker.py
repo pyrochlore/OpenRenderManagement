@@ -57,7 +57,7 @@ class Worker(MainLoopApplication):
         self.computerName = COMPUTER_NAME_TEMPLATE % (settings.ADDRESS,
                                                       settings.PORT)
         self.lastSysInfosMessageTime = 0
-        self.sysInfosMessagePeriod = 6
+        self.sysInfosMessagePeriod = 10
         self.httpconn = httplib.HTTPConnection(settings.DISPATCHER_ADDRESS, settings.DISPATCHER_PORT)
         self.PID_DIR = os.path.dirname(settings.PIDFILE)
         if not os.path.isdir(self.PID_DIR):
