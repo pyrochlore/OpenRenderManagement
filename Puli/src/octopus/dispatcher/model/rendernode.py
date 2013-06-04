@@ -326,6 +326,28 @@ class RenderNode(models.Model):
         self.reset(paused=True)
         raise self.RequestFailed()
 
+    def request2(self, method, url, body=None, headers={}):
+        for i in xrange(settings.RENDERNODE_REQUEST_MAX_RETRY_COUNT):
+            try:
+                if method is "GET":
+                    r = requests.get(url, params=body, timeout=20)
+                elif methos is "POST":
+                    r = requests.post(url, params=body, timeout=20)
+                elif methos is "PUT":
+                    r = requests.put(url, params=body, timeout=20)
+                elif methos is "DELETE":
+                    r = requests.delete(url, params=body, timeout=20)
+                return (r.status_code, r.json())
+            except requests.exceptions.Timeout:
+                LOGGER.exception("Timeout on rendernode %s for req %s" % (self.name, url))
+            except requests.exceptions.ConnectionError:
+                LOGGER.exception("ConnectionError on rendernode %s for req %s" % (self.name, url))
+            except requests.exceptions.HTTPError:
+                LOGGER.exception("HTTPError on rendernode %s for req %s" % (self.name, url))
+        # request failed too many times so pause the RN and report a failure
+        self.reset(paused=True)
+        raise self.RequestFailed()
+
     def canRun(self, command):
         for (requirement, value) in command.task.requirements.items():
             if requirement.lower() == "softs":  # todo
